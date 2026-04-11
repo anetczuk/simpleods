@@ -1,0 +1,61 @@
+[project]
+name = "simpleodf"
+version = "1.0.1"
+description = "simple wrapper objects for odfpy allowing easy and intuitive navigation through spreadsheet"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Arkadiusz Netczuk" }
+]
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "odfpy",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "pylint",
+    "ruff",
+    "complexipy",
+    "bandit",
+    "shellcheck_py",
+    "mypy",
+    "coverage",
+    "flake8",
+    "pycodestyle",
+    "pydocstyle",
+    "pyprof2calltree",
+    
+    ## for Markdown files analysis
+    "mdlinkscheck @ git+https://github.com/anetczuk/mdlinkscheck.git#subdirectory=src",
+    "xmltodict",
+    
+    ## for profiling (tools/profiler.sh)
+    "snakeviz",
+    "mtprof",
+    "viztracer",
+]
+
+[project.urls]
+Repository = "https://github.com/anetczuk/simpleodf"
+
+#[project.scripts]
+#myprogramexec = "myprogrampkg.main:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["simpleodf*"]
+
+#[tool.setuptools.package-data]
+#myprogramexec = [
+#    "ui/*.ui",
+#]
+
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"

@@ -1,0 +1,13 @@
+#
+# Copyright (c) 2026, Arkadiusz Netczuk <dev.arnet@gmail.com>
+# All rights reserved.
+#
+# This source code is licensed under the BSD 3-Clause license found in the
+# LICENSE file in the root directory of this source tree.
+#
+
+import os
+import sys
+
+#### append source root
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

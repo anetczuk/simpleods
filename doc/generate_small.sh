@@ -1,0 +1,31 @@
+#!/bin/bash
+
+set -eu
+
+
+##
+## Find PNG files and generate small versions suitable for GitHub readmes.
+##
+
+
+WORK_DIR="${PWD}"
+
+
+## big_suffix="-big."
+small_suffix="-small."
+
+# shellcheck disable=SC2044
+for filename in $(find "$WORK_DIR" -name "*.png"); do
+    if [[ $filename == *"$small_suffix"* ]]; then
+        continue
+    fi
+    small_name=${filename/".png"/"${small_suffix}png"}
+
+    ##if [[ $filename != *"$big_suffix"* ]]; then
+    ##    continue
+    ##fi
+    ##small_name=${filename/$big_suffix/$small_suffix}
+
+    echo "converting: $filename -> $small_name"
+    convert "$filename" -strip -resize 700 "$small_name"
+done

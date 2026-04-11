@@ -1,0 +1,15 @@
+/.settings
+/.project
+/.pydevproject
+*.pyc
+/tmp/
+.idea/
+/venv/
+/.venv/
+/.venv_release/
+
+/build/
+/src/build/
+/src/simpleodf.egg-info/
+
+/tools/.complexipy_cache/
