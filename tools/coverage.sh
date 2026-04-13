@@ -35,8 +35,13 @@ coverage run --source "$SOURCE_DIR" --omit "*/site-packages/*,*/test*/*" --branc
 coverage html -d "$htmlcov_dir"
 
 
+SYMLINK_PATH="/tmp/htmlcov.index.html"
+ln -s -f "$htmlcov_dir/index.html" "${SYMLINK_PATH}"
+
+
 echo ""
 echo "Coverage HTML output: file://$htmlcov_dir/index.html"
+echo "Coverage output symlink: file://$SYMLINK_PATH"
 
 
 ## rm ${coverage_file}

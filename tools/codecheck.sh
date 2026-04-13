@@ -141,7 +141,7 @@ popd > /dev/null
 echo
 echo "running ruff"
 echo "to ignore warning for module put following line on top of file: # ruff: noqa: <check_id>"
-echo "to ignore warning for one line put following comment in line before: # ruff: noqa: <check_id>"
+echo "to ignore warning for one line put following comment in line before: # noqa: <check_id>"
 run_ruff() {
     local check_dir="${1}"
     echo "checking ${check_dir}"
@@ -172,6 +172,7 @@ run_ruff() {
     ignore_errors+=(RUF013)     ## RUF013 PEP 484 prohibits implicit `Optional`
     ignore_errors+=(RUF100)     ## RUF100 [*] Unused `noqa` directive (unused: `F811`)
     ignore_errors+=(TRY400)     ## TRY400 Use `logging.exception` instead of `logging.error`
+    ignore_errors+=(PT027)      ## PT027 Use `pytest.raises` instead of unittest-style `assertRaises`
 
     ## TODO: fix    
     ignore_errors+=(DTZ007)     ## DTZ007 Naive datetime constructed using `datetime.datetime.strptime()` without %z
