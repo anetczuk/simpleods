@@ -12,4 +12,4 @@
 /src/build/
 /src/simpleods.egg-info/
 
-/tools/.complexipy_cache/
+.complexipy_cache/

@@ -18,7 +18,7 @@ output_file = None
 
 
 def get_logging_output_file(log_dir=None):
-    """Get standarized logger output directory."""
+    """Get standardized logger output directory."""
     if not log_dir:
         log_dir = os.path.join(SCRIPT_DIR, "../../tmp/log")
     log_dir = os.path.abspath(log_dir)

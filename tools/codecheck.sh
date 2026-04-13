@@ -260,6 +260,19 @@ fi
 
 ## ============================================
 
+echo
+echo "running codespell"
+
+"${COMMAND_PATH}"codespell --toml "${src_dir}/../pyproject.toml" "${src_dir}" -f
+exit_code=$?
+if [ $exit_code -ne 0 ]; then
+    exit $exit_code
+fi
+echo "codespell -- no warnings found"
+
+
+## ============================================
+
 ## check shell scripts
 echo
 found_files=$(find "$src_dir/../" -not -path "*/venv/*" -not -path "*/.venv/*" -not -path "*/.venv_release/*" -not -path "*/tmp/*" -type f -name '*.sh' -o -name '*.bash')
