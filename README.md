@@ -5,6 +5,13 @@ Simple wrapper objects for `odfpy` package allowing easy navigation through spre
 
 ## Features
 
+- adding, moving, copying and removing rows and cells, 
+- getting rows and cells by index,
+- printing cells spreadsheet coordinates,
+- sorting rows,
+- removeing empty rows,
+- expanding repeated rows and cells
+
 
 ## Installation
 
