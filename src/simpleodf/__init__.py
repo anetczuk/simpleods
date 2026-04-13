@@ -1,3 +1,5 @@
+"""Library package."""
+
 #
 # Copyright (c) 2026, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.

@@ -1,3 +1,5 @@
+"""Unit tests."""
+
 #
 # Copyright (c) 2026, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -9,5 +11,6 @@
 import os
 import sys
 
-#### append source root
+## append source root - allows to run tests directly by `runtests.py`
+## without venv
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))

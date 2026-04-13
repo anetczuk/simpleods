@@ -6,12 +6,16 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+## no need to docstring unit tests
+# pylint: disable=C0114,C0115,C0116
+# ruff: noqa: D100,D101,D102,D103
+
 import unittest
 import tempfile
 
 from testsimpleodf.data import get_data_path
 
-from simpleodf.odfwrapper import get_spreadsheet_coords, Document, Sheet, Row, Cell
+from simpleodf.odfwrapper import get_spreadsheet_coords, SpreadsheetDocument, Sheet, Row, Cell
 
 
 class FreeFunctionsTest(unittest.TestCase):
@@ -32,7 +36,7 @@ class FreeFunctionsTest(unittest.TestCase):
 
 
 def create_simple_document():
-    document = Document.new()
+    document = SpreadsheetDocument.new()
     sheet: Sheet = document.get_sheet("Sheet1")
     sheet.add_new_row()
     return document
@@ -50,7 +54,7 @@ class CellTest(unittest.TestCase):
 
     def test_get_index_02(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
         cell = sheet.get_cell_by_index(0, 0)
         cell_index = cell.get_index()
@@ -58,7 +62,7 @@ class CellTest(unittest.TestCase):
 
     def test_get_index_03(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
         cell = sheet.get_cell_by_index(3, 3)
         cell_index = cell.get_index()
@@ -66,7 +70,7 @@ class CellTest(unittest.TestCase):
 
     def test_clear_cell(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
         cell = sheet.get_cell_by_index(5, 6)
         self.assertEqual("cc", cell.get_text())
@@ -76,7 +80,7 @@ class CellTest(unittest.TestCase):
 
     def test_move_content_to(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
 
         src_cell = sheet.get_cell_by_index(5, 6)
@@ -101,7 +105,7 @@ class CellTest(unittest.TestCase):
 class RowTest(unittest.TestCase):
     def test_get_cell_by_index_expanded(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
         row: Row = sheet.get_row_by_index(0)
 
@@ -115,7 +119,7 @@ class RowTest(unittest.TestCase):
 
     def test_get_index_03(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
         cell = sheet.get_cell_by_index(3, 3)
         cell_index = cell.get_index()
@@ -127,13 +131,13 @@ class RowTest(unittest.TestCase):
 
 class SheetTest(unittest.TestCase):
     def test_count_empty(self):
-        document = Document.new()
+        document = SpreadsheetDocument.new()
         sheet = document.get_sheet("Sheet1")
         self.assertEqual(0, sheet.count_rows())
         self.assertEqual(0, sheet.count_cells())
 
     def test_count_filled(self):
-        document = Document.new()
+        document = SpreadsheetDocument.new()
         sheet = document.get_sheet("Sheet1")
 
         sheet.add_new_row()
@@ -175,14 +179,14 @@ class SheetTest(unittest.TestCase):
 
     def test_get_values_repeated_01(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
         values = sheet.get_values(expand_repeated=False)
         self.assertEqual([[""], ["", "aa", ""], ["", "aa", ""], ["", "bb", "cc"]], values)
 
     def test_get_values_repeated_02(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
         values = sheet.get_values(expand_repeated=True)
         self.assertEqual(
@@ -212,7 +216,7 @@ class SheetTest(unittest.TestCase):
 
     def test_remove_empty_rows(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
 
         values = sheet.get_values(expand_repeated=False)
@@ -225,7 +229,7 @@ class SheetTest(unittest.TestCase):
 
     def test_expand_rows(self):
         data_path = get_data_path("repeated.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet: Sheet = document.get_sheet("Sheet1")
 
         values = sheet.get_values(expand_repeated=False)
@@ -274,34 +278,34 @@ class SheetTest(unittest.TestCase):
 ## ========================================================================
 
 
-class DocumentTest(unittest.TestCase):
+class SpreadsheetDocumentTest(unittest.TestCase):
     def test_load_empty_document_nonexisting(self):
         data_path = "not_existing_file_path.ods"
-        self.assertRaises(FileNotFoundError, Document.load, data_path)
+        self.assertRaises(FileNotFoundError, SpreadsheetDocument.load, data_path)
 
     def test_load_empty_document(self):
         try:
             data_path = get_data_path("empty.ods")
-            Document.load(data_path)
+            SpreadsheetDocument.load(data_path)
         except Exception:  # pylint: disable=W0718 # noqa: BLE001
             self.fail("function raised Exception unexpectedly!")
 
     def test_load_sheet_nonexisting(self):
         data_path = get_data_path("empty.ods")
-        document = Document.load(data_path)
+        document = SpreadsheetDocument.load(data_path)
         sheet = document.get_sheet("non_existing_sheet")
         self.assertTrue(sheet is None)
 
     def test_load_sheet(self):
         data_path = get_data_path("empty.ods")
-        doc = Document.load(data_path)
+        doc = SpreadsheetDocument.load(data_path)
         sheet = doc.get_sheet("Sheet1")
         self.assertTrue(sheet is not None)
 
     def test_save_fileobject(self):
         try:
             data_path = get_data_path("empty.ods")
-            doc = Document.load(data_path)
+            doc = SpreadsheetDocument.load(data_path)
             with tempfile.NamedTemporaryFile() as temp_file:
                 doc.save(temp_file)
         except Exception:  # pylint: disable=W0718 # noqa: BLE001
@@ -309,7 +313,7 @@ class DocumentTest(unittest.TestCase):
 
     def test_reload(self):
         data_path = get_data_path("empty.ods")
-        doc = Document.load(data_path)
+        doc = SpreadsheetDocument.load(data_path)
         old_doc = doc.document
         doc.reload()
         self.assertNotEqual(id(old_doc), id(doc.document))

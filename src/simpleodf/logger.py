@@ -1,3 +1,5 @@
+"""Logging helper functions."""
+
 #
 # Copyright (c) 2024, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -6,16 +8,17 @@
 # LICENSE file in the root directory of this source tree.
 #
 
-import logging
 import os
 import sys
-from logging import handlers
+import logging
+from logging import handlers, Handler
 
 SCRIPT_DIR = os.path.dirname(__file__)
 output_file = None
 
 
 def get_logging_output_file(log_dir=None):
+    """Get standarized logger output directory."""
     if not log_dir:
         log_dir = os.path.join(SCRIPT_DIR, "../../tmp/log")
     log_dir = os.path.abspath(log_dir)
@@ -28,6 +31,7 @@ def get_logging_output_file(log_dir=None):
 
 
 def configure(log_file=None, log_dir=None, log_level=None):
+    """Configure logger with file and standard output handlers."""
     # pylint: disable=W0603
     # ruff: noqa: PLW0603
     global output_file
@@ -67,6 +71,7 @@ def configure(log_file=None, log_dir=None, log_level=None):
 
 
 def configure_console(log_level=None):
+    """Configure logging to output to standard output."""
     if log_level is None:
         log_level = logging.DEBUG
 
@@ -80,7 +85,8 @@ def configure_console(log_level=None):
     logging.root.setLevel(log_level)
 
 
-def create_stdout_handler():
+def create_stdout_handler() -> Handler:
+    """Create logging handler printing output to standard output."""
     formatter = create_formatter()
     console_handler = logging.StreamHandler(stream=sys.stdout)
     console_handler.setFormatter(formatter)
@@ -88,6 +94,7 @@ def create_stdout_handler():
 
 
 def create_formatter(logger_format=None):
+    """Create logging formatter."""
     if logger_format is None:
         logger_format = (
             "%(asctime)s,%(msecs)-3d %(levelname)-8s %(threadName)s %(name)s:%(funcName)s "
@@ -103,6 +110,7 @@ class EmptyLineFormatter(logging.Formatter):
 
     ## override base class method
     def format(self, record):
+        """Format given record to output."""
         msg = record.getMessage()
         clear_msg = msg.replace("\n", "")
         clear_msg = clear_msg.replace("\r", "")
@@ -113,5 +121,6 @@ class EmptyLineFormatter(logging.Formatter):
 
 
 def print_log_tree():
+    """Print logger tree to standard output."""
     # ruff: noqa: T201
     print(logging.root.manager.loggerDict.keys())  # pylint: disable=no-member

@@ -1,3 +1,5 @@
+"""Spreadsheet wrappers for odfpy objects."""
+
 #
 # Copyright (c) 2026, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -7,14 +9,13 @@
 #
 
 import logging
+from collections.abc import Callable
 
 import copy
 import tempfile
 
 import odf
 from odf.opendocument import load as odf_load
-
-# from odf.namespaces import TABLENS
 
 from odf.table import Table, TableColumn
 from odf.table import TableRow
@@ -28,6 +29,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def get_spreadsheet_coords(row_index: int, cell_index: int) -> tuple[str, str]:
+    """Convert numeric cell index coords to spreadsheet cell address."""
     ## alphabet size: 26 letters
     alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     col_high = int(cell_index / 26)
@@ -44,15 +46,19 @@ def get_spreadsheet_coords(row_index: int, cell_index: int) -> tuple[str, str]:
 
 
 class Cell:
+    """Cell wrapper."""
 
     def __init__(self, cell: TableCell):
+        """Wrap odfpy object."""
         self.cell: TableCell = cell
 
     def get_parent(self) -> "Row":
+        """Get parent row object."""
         row = self.cell.parentNode
         return Row(row)
 
     def clear_cell(self):
+        """Clear cell content."""
         # Remove all child nodes (usually <text:p>)
         for child in list(self.cell.childNodes):  # snapshot list to avoid iteration issues
             self.cell.removeChild(child)
@@ -63,6 +69,7 @@ class Cell:
                 self.cell.removeAttribute(attr)
 
     def copy_cell(self) -> "Cell":
+        """Copy cell content."""
         ## deep copy of cell object is not advised
         ## return copy.deepcopy(self.cell)
 
@@ -72,6 +79,7 @@ class Cell:
         return target_cell
 
     def copy_cell_to(self, target_cell: "Cell"):
+        """Copy cell's content into target cell."""
         attr_dict = {
             "style-name": "stylename",
             "value-type": "valuetype",
@@ -88,20 +96,28 @@ class Cell:
             dst_cell.addElement(copy.deepcopy(child))
 
     def move_content_to(self, target_cell: "Cell"):
+        """Move cell's content into target cell."""
         self.copy_cell_to(target_cell)
         self.clear_cell()
 
     def get_repeat(self) -> int:
+        """Get row's repeat attribute value."""
         return Cell.get_repeat_attribute(self.cell)
 
     def is_repeated(self) -> bool:
+        """Check if row is repeated."""
         return Cell.get_repeat_attribute(self.cell) > 1
 
     @staticmethod
     def get_repeat_attribute(cell) -> int:
+        """Get row's repeat attribute value."""
         return int(cell.getAttribute("numbercolumnsrepeated") or 1)
 
     def get_index(self) -> list[int]:
+        """Get cell index.
+
+        If cell is repeated then return all it's indexes.
+        """
         row = self.cell.parentNode
         ret_index = []
         index = 0
@@ -117,12 +133,14 @@ class Cell:
         return ret_index
 
     def get_spreadsheet_coords(self) -> tuple[str, str]:
+        """Convert numeric cell index coords to spreadsheet cell address."""
         row: Row = self.get_parent()
         row_index = row.get_index()
         cell_index = self.get_index()
         return get_spreadsheet_coords(row_index[0], cell_index[0])
 
     def get_text(self) -> str:
+        """Get cell's text."""
         text = ""
         for p in self.cell.getElementsByType(P):
             if p.firstChild:
@@ -130,11 +148,13 @@ class Cell:
         return text
 
     def set_text(self, content: str):
+        """Set cell's content."""
         for child in list(self.cell.childNodes):  # snapshot list to avoid iteration issues
             self.cell.removeChild(child)
         self.cell.addElement(P(text=content))
 
     def expand_cell(self):
+        """Replace cell's 'repeat' attribute with corresponding number of duplicated cells."""
         repeat = Cell.get_repeat_attribute(self.cell)
         if repeat < 2:
             return
@@ -150,19 +170,27 @@ class Cell:
 
 
 class Row:
+    """Row wrapper."""
 
     def __init__(self, row: TableRow):
+        """Wrap odfpy object."""
         self.row: TableRow = row
 
     def get_parent(self) -> "Sheet":
+        """Get parent sheet object."""
         sheet = self.row.parentNode
         return Sheet(sheet)
 
     def count_cells(self) -> int:
+        """Count cells in row.
+
+        Ignores repeat attribute.
+        """
         cell_list = self.row.getElementsByType(TableCell)
         return len(cell_list)
 
     def add_new_column(self, content=None):
+        """Add column object and corresponding cell."""
         sheet: Sheet = self.get_parent()
         sheet.add_new_column()
         cell_list = self.row.getElementsByType(TableCell)
@@ -174,31 +202,42 @@ class Row:
         return cell
 
     def add_new_cell(self):
+        """Insert new cell at end of row."""
         item = TableCell()
         self.row.addElement(item)
 
     def add_cell(self, item: TableCell):
+        """Insert cell at end of row."""
         self.row.addElement(item)
 
     def add_cells(self, item_list: list[TableCell]):
+        """Insert cells at end of row."""
         for item in item_list:
             self.row.addElement(item)
 
     def add_cells_before(self, item_list: list[Cell], reference_cell):
+        """Insert cell into row."""
         for item in item_list:
             self.row.insertBefore(item.cell, reference_cell)
 
     def get_repeat(self) -> int:
+        """Get row's repeat attribute value."""
         return Row.get_repeat_attribute(self.row)
 
     @staticmethod
     def get_repeat_attribute(row) -> int:
+        """Get row's repeat attribute value."""
         return int(row.getAttribute("numberrowsrepeated") or 1)
 
     def is_repeated(self) -> bool:
+        """Check if row is repeated."""
         return Row.get_repeat_attribute(self.row) > 1
 
     def get_index(self) -> list[int]:
+        """Get row index.
+
+        If row is repeated then return all it's indexes.
+        """
         sheet = self.row.parentNode
         ret_index = []
         index = 0
@@ -214,6 +253,7 @@ class Row:
         return ret_index
 
     def get_cell_by_index(self, cell_index: int) -> Cell:
+        """Get cell by given index."""
         index = 0
         cells_list = self.row.getElementsByType(TableCell)
         for curr_item in cells_list:
@@ -225,6 +265,10 @@ class Row:
         return None
 
     def get_cell_by_index_expanded(self, cell_index: int) -> Cell:
+        """Get cell by given index.
+
+        If pointed cell is repeated then duplicate the cell before returning.
+        """
         curr_cell = self.get_cell_by_index(cell_index)
         if curr_cell is None:
             message = "unable to get cell by index"
@@ -241,7 +285,8 @@ class Row:
             return None
         return curr_cell
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
+        """Check if row does not contain any text."""
         cells_list = self.row.getElementsByType(TableCell)
         for cell_item in cells_list:
             cell_text = Cell(cell_item).get_text()
@@ -250,6 +295,7 @@ class Row:
         return True
 
     def get_values(self, *, expand_repeated: bool = True) -> list[str]:
+        """Convert row's all cells to list."""
         cells_list = self.row.getElementsByType(TableCell)
         if expand_repeated is False:
             return [Cell(cell_item).get_text() for cell_item in cells_list]
@@ -263,23 +309,24 @@ class Row:
 
 
 class Sheet:
+    """Sheet wrapper."""
 
     def __init__(self, table: Table):
+        """Wrap odfpy object."""
         self.table: Table = table
 
     def count_rows(self) -> int:
+        """Get number of rows in sheet."""
         rows_list = self.table.getElementsByType(TableRow)
         return len(rows_list)
 
     def count_cells(self) -> int:
-        count = 0
-        rows_list = self.table.getElementsByType(TableRow)
-        for item in rows_list:
-            row = Row(item)
-            count += row.count_cells()
-        return count
+        """Get number of cells in sheet."""
+        cell_list = self.table.getElementsByType(TableCell)
+        return len(cell_list)
 
     def add_new_row(self):
+        """Add empty row to sheet."""
         item = TableRow()
         self.add_row(item)
         row = Row(item)
@@ -293,13 +340,16 @@ class Sheet:
         return row
 
     def add_row(self, item):
+        """Add row to sheet."""
         self.table.addElement(item)
 
     def add_rows(self, item_list: list[Row]):
+        """Add rows to sheet."""
         for item in item_list:
             self.table.addElement(item.row)
 
     def add_new_column(self):
+        """Add empty column."""
         item = TableColumn()
         self.table.addElement(item)
         # add a new cell to each row
@@ -308,6 +358,7 @@ class Sheet:
             row.addElement(cell)
 
     def get_row_by_index(self, row_index: int) -> Row:
+        """Get row by given index."""
         index = 0
         rows_list = self.table.getElementsByType(TableRow)
         for curr_item in rows_list:
@@ -319,12 +370,14 @@ class Sheet:
         return None
 
     def get_cell_by_index(self, row_index: int, cell_index: int) -> Cell:
+        """Get cell by given index."""
         curr_row = self.get_row_by_index(row_index)
         if curr_row is None:
             return None
         return curr_row.get_cell_by_index(cell_index)
 
     def get_rows(self, row_start_index=None, row_end_index=None) -> list[Row]:
+        """Get rows by given index span."""
         all_rows = list(self.table.getElementsByType(TableRow))  ## copy of list
         if row_end_index:
             all_rows = all_rows[:row_end_index]
@@ -333,6 +386,10 @@ class Sheet:
         return [Row(item) for item in all_rows]
 
     def remove_empty_rows(self, row_start_index=None, row_end_index=None) -> bool:
+        """Remove empty rows.
+
+        Row is treated as empty when it's cells do not contain content.
+        """
         all_rows: list[Row] = self.get_rows(row_start_index, row_end_index)
         removed = False
         for curr_row in all_rows:
@@ -342,6 +399,7 @@ class Sheet:
         return removed
 
     def expand_rows(self):
+        """Duplicate rows marked as repeated."""
         #
         # duplicate rows
         #
@@ -364,7 +422,13 @@ class Sheet:
             for new_item in new_items_list:
                 parent.insertBefore(new_item, row)
 
-    def sort_rows(self, row_transformer, row_start_index=None, row_end_index=None):
+    def sort_rows(self, row_transformer: Callable, row_start_index=None, row_end_index=None):
+        """Sort rows.
+
+        :param row_transformer: callable calculating representation of rows
+        :param row_start_index: optional start row
+        :param row_end_index: optional end row
+        """
         all_rows = self.get_rows(row_start_index, row_end_index)
 
         row_data_list = []
@@ -404,6 +468,7 @@ class Sheet:
         self.add_rows(all_rows[table_row_end:])
 
     def get_values(self, *, expand_repeated: bool = True) -> list[list[str]]:
+        """Convert all cells to 2D matrix."""
         rows_list = self.table.getElementsByType(TableRow)
         if expand_repeated is False:
             return [Row(row_item).get_values(expand_repeated=False) for row_item in rows_list]
@@ -416,22 +481,26 @@ class Sheet:
         return ret_list
 
 
-class Document:
+class SpreadsheetDocument:
+    """Document wrapper."""
 
-    def __init__(self, document: odf.opendocument.OpenDocument):
-        self.document: odf.opendocument.OpenDocument = document
+    def __init__(self, document: odf.opendocument.OpenDocumentSpreadsheet):
+        """Wrap odfpy object."""
+        self.document: odf.opendocument.OpenDocumentSpreadsheet = document
 
     @staticmethod
-    def new(sheet_name: str = "Sheet1") -> "Document":
+    def new(sheet_name: str = "Sheet1") -> "SpreadsheetDocument":
+        """Create new spreadsheet document with empty table sheet."""
         doc = odf.opendocument.OpenDocumentSpreadsheet()
         sheet = Table(name=sheet_name)
         doc.spreadsheet.addElement(sheet)
-        return Document(doc)
+        return SpreadsheetDocument(doc)
 
     @staticmethod
-    def load(file_path: str) -> "Document":
+    def load(file_path: str) -> "SpreadsheetDocument":
+        """Load spreadsheet document."""
         doc = odf_load(file_path)
-        return Document(doc)
+        return SpreadsheetDocument(doc)
 
     def save(self, output_file):
         """Save document to file.
@@ -450,7 +519,11 @@ class Document:
             self.save(temp_file)
             self.document = odf_load(temp_file)
 
-    def get_sheet(self, sheet_name) -> Sheet:
+    def get_sheet(self, sheet_name: str) -> Sheet:
+        """Get spreadsheet by name.
+
+        :param str sheet_name: spreadsheet name
+        """
         for table in self.document.spreadsheet.getElementsByType(Table):
             if table.getAttribute("name") == sheet_name:
                 return Sheet(table)

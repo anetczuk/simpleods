@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+"""Unit tests runner.
+
+Contains couple of useful options like preselecting test cases and running tests in loop.
+"""
+
 #
 # Copyright (c) 2025, Arkadiusz Netczuk <dev.arnet@gmail.com>
 # All rights reserved.
@@ -38,6 +43,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def match_tests(pattern: str):
+    """Get test suites matching given pattern."""
     if pattern.find("*") < 0:
         ## regular module
         loader = unittest.TestLoader()
@@ -57,6 +63,7 @@ def match_tests(pattern: str):
 
 
 def match_test_suites(tests_list, re_pattern: str):
+    """Get test suites matching given pattern."""
     ret_suite = unittest.TestSuite()
     for test_object in tests_list:
         if isinstance(test_object, unittest.TestSuite):
@@ -78,6 +85,7 @@ def match_test_suites(tests_list, re_pattern: str):
 
 
 def get_test_cases(run_test):
+    """Find test suite based on test name."""
     if run_test:
         ## not empty
         return match_tests(run_test)

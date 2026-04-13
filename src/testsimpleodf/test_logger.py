@@ -6,6 +6,10 @@
 # LICENSE file in the root directory of this source tree.
 #
 
+## no need to docstring unit tests
+# pylint: disable=C0114,C0115,C0116
+# ruff: noqa: D100,D101,D102,D103
+
 import io
 import logging
 import unittest
