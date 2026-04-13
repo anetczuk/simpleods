@@ -1,4 +1,4 @@
-# simpleodf
+# simpleods
 
 Simple wrapper objects for `odfpy` package allowing easy navigation through spreadsheet with some handy methods.
 
@@ -9,11 +9,11 @@ Simple wrapper objects for `odfpy` package allowing easy navigation through spre
 ## Installation
 
 Installation of package for use can be done by:
-  - to install package from downloaded ZIP file execute: `pip3 install --user -I file:simpleodf-master.zip`
-  - to install package directly from GitHub execute: `pip3 install --user -I git+https://github.com/anetczuk/simpleodf.git`
+  - to install package from downloaded ZIP file execute: `pip3 install --user -I file:simpleods-master.zip`
+  - to install package directly from GitHub execute: `pip3 install --user -I git+https://github.com/anetczuk/simpleods.git`
   - installation from local repository root directory: `pip3 install --user .`
 
-To uninstall run: `pip3 uninstall simpleodf`
+To uninstall run: `pip3 uninstall simpleods`
 
 To install project under virtual environment use `tools/installvenv.sh`.
 
@@ -49,7 +49,7 @@ directory. This configuration requires installation of dependencies: `./src/inst
 
 ### Running tests
 
-To run tests execute `src/testtestsimpleodf/runtests.py`. It can be run with code profiling 
+To run tests execute `src/testtestsimpleods/runtests.py`. It can be run with code profiling 
 and code coverage options.
 
 

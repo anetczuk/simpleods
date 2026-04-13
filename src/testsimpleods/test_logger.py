@@ -14,7 +14,7 @@ import io
 import logging
 import unittest
 
-from simpleodf import logger
+from simpleods import logger
 
 
 class LoggerTest(unittest.TestCase):

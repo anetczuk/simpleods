@@ -10,6 +10,6 @@
 
 /build/
 /src/build/
-/src/simpleodf.egg-info/
+/src/simpleods.egg-info/
 
 /tools/.complexipy_cache/

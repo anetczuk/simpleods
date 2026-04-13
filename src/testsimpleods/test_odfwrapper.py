@@ -13,9 +13,9 @@
 import unittest
 import tempfile
 
-from testsimpleodf.data import get_data_path
+from testsimpleods.data import get_data_path
 
-from simpleodf.odfwrapper import get_spreadsheet_coords, SpreadsheetDocument, Sheet, Row, Cell
+from simpleods.odfwrapper import get_spreadsheet_coords, SpreadsheetDocument, Sheet, Row, Cell
 
 
 class FreeFunctionsTest(unittest.TestCase):
