@@ -43,7 +43,7 @@ Installation for development with configuration of virtual environment:
 Installation for development without venv:
   - `src/install-app.sh --dev` to install dependencies, the package in editable mode and install development tooling.
 
-Virtual environmnt can be also configured manually by:
+Virtual environment can be also configured manually by:
   - `python3 -m venv .venv`
   - `source .venv/bin/activate`
   - `python -m pip install --upgrade pip`
