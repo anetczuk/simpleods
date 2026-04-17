@@ -103,6 +103,20 @@ class CellTest(unittest.TestCase):
 
 
 class RowTest(unittest.TestCase):
+    def test_count_cells(self):
+        data_path = get_data_path("repeated.ods")
+        document = SpreadsheetDocument.load(data_path)
+        sheet: Sheet = document.get_sheet("Sheet1")
+        row: Row = sheet.get_row_by_index(0)
+
+        cells_number = row.count_cells()
+        self.assertEqual(1, cells_number)
+
+        row.expand_cells()
+
+        cells_number = row.count_cells()
+        self.assertEqual(7, cells_number)
+
     def test_get_cell_by_index_expanded(self):
         data_path = get_data_path("repeated.ods")
         document = SpreadsheetDocument.load(data_path)
@@ -273,6 +287,22 @@ class SheetTest(unittest.TestCase):
         cell11: Cell = sheet.get_cell_by_index(1, 1)
         self.assertEqual("aaa", cell00.get_text())
         self.assertEqual("bbb", cell11.get_text())
+
+    def test_find_repeated_rows(self):
+        data_path = get_data_path("repeated.ods")
+        document = SpreadsheetDocument.load(data_path)
+        sheet: Sheet = document.get_sheet("Sheet1")
+
+        repeated = sheet.find_repeated_rows()
+        self.assertEqual(1, len(repeated))
+
+    def test_find_repeated_cells(self):
+        data_path = get_data_path("repeated.ods")
+        document = SpreadsheetDocument.load(data_path)
+        sheet: Sheet = document.get_sheet("Sheet1")
+
+        repeated = sheet.find_repeated_cells()
+        self.assertEqual(9, len(repeated))
 
 
 ## ========================================================================

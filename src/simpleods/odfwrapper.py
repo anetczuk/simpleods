@@ -16,10 +16,10 @@ import tempfile
 
 import odf
 from odf.opendocument import load as odf_load
-
 from odf.table import Table, TableColumn
 from odf.table import TableRow
 from odf.table import TableCell
+from odf.element import Element
 from odf.text import P
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,6 +40,21 @@ def get_spreadsheet_coords(row_index: int, cell_index: int) -> tuple[str, str]:
     low_letter = alphabet[col_low]
     col_name = col_name + low_letter
     return (f"{row_index + 1}", col_name)
+
+
+def deep_copy_element(element: Element) -> Element:
+    """Make deep copy of given element."""
+    memo = {}
+    doc = element.ownerDocument
+    memo[id(doc)] = doc
+    parent = element.parentNode
+    memo[id(parent)] = parent
+
+    copied_child = copy.deepcopy(element, memo)
+    copied_child.ownerDocument = None
+    copied_child.parentNode = None
+
+    return copied_child
 
 
 ## =======================================================
@@ -83,6 +98,7 @@ class Cell:
         attr_dict = {
             "style-name": "stylename",
             "value-type": "valuetype",
+            "number-columns-repeated": "numbercolumnsrepeated",
         }
 
         # copy attributes
@@ -91,9 +107,10 @@ class Cell:
             attr_value = attr_dict.get(attr, attr)
             dst_cell.setAttribute(attr_value, value)
 
-        # copy content
+        # copy contents
         for child in self.cell.childNodes:
-            dst_cell.addElement(copy.deepcopy(child))
+            copied_child = deep_copy_element(child)
+            dst_cell.addElement(copied_child)
 
     def move_content_to(self, target_cell: "Cell"):
         """Move cell's content into target cell."""
@@ -181,6 +198,19 @@ class Row:
         sheet = self.row.parentNode
         return Sheet(sheet)
 
+    def copy_row(self) -> "Row":
+        """Copy row content."""
+        ## deep copy of cell object is not advised
+
+        all_cells = self.get_cells()
+
+        dst_row = TableRow()
+        target_row = Row(dst_row)
+        for item in all_cells:
+            copied = item.copy_cell()
+            target_row.add_cell(copied)
+        return target_row
+
     def count_cells(self) -> int:
         """Count cells in row.
 
@@ -195,8 +225,8 @@ class Row:
         sheet.add_new_column()
         cell_list = self.row.getElementsByType(TableCell)
         item = cell_list[-1]
-        self.add_cell(item)
         cell = Cell(item)
+        self.add_cell(cell)
         if content:
             cell.set_text(content)
         return cell
@@ -206,14 +236,14 @@ class Row:
         item = TableCell()
         self.row.addElement(item)
 
-    def add_cell(self, item: TableCell):
+    def add_cell(self, item: Cell):
         """Insert cell at end of row."""
-        self.row.addElement(item)
+        self.row.addElement(item.cell)
 
-    def add_cells(self, item_list: list[TableCell]):
+    def add_cells(self, item_list: list[Cell]):
         """Insert cells at end of row."""
         for item in item_list:
-            self.row.addElement(item)
+            self.row.addElement(item.cell)
 
     def add_cells_before(self, item_list: list[Cell], reference_cell):
         """Insert cell into row."""
@@ -251,6 +281,15 @@ class Row:
                 ret_index.append(index)
                 index += 1
         return ret_index
+
+    def get_cells(self, cell_start_index=None, cell_end_index=None) -> list[Cell]:
+        """Get cells by given index span."""
+        all_cells = list(self.row.getElementsByType(TableCell))  ## copy of list
+        if cell_end_index:
+            all_cells = all_cells[:cell_end_index]
+        if cell_start_index:
+            all_cells = all_cells[cell_start_index:]
+        return [Cell(item) for item in all_cells]
 
     def get_cell_by_index(self, cell_index: int) -> Cell:
         """Get cell by given index."""
@@ -307,6 +346,13 @@ class Row:
             ret_list.extend([cell_text] * repeat_num)
         return ret_list
 
+    def expand_cells(self):
+        """Duplicate cells marked as repeated."""
+        all_cells = self.get_cells()
+        for item in all_cells:
+            if item.is_repeated():
+                item.expand_cell()
+
 
 class Sheet:
     """Sheet wrapper."""
@@ -328,7 +374,7 @@ class Sheet:
     def add_new_row(self):
         """Add empty row to sheet."""
         item = TableRow()
-        self.add_row(item)
+        self.table.addElement(item)
         row = Row(item)
         columns = self.table.getElementsByType(TableColumn)
         cols_len = len(columns)
@@ -339,9 +385,9 @@ class Sheet:
             row.add_new_cell()
         return row
 
-    def add_row(self, item):
+    def add_row(self, item: Row):
         """Add row to sheet."""
-        self.table.addElement(item)
+        self.table.addElement(item.row)
 
     def add_rows(self, item_list: list[Row]):
         """Add rows to sheet."""
@@ -356,6 +402,10 @@ class Sheet:
         for row in self.table.getElementsByType(TableRow):
             cell = TableCell()
             row.addElement(cell)
+
+    def insert_row_before(self, item: Row, reference_row: Row):
+        """Insert item row before reference_row."""
+        self.table.insertBefore(item.row, reference_row.row)
 
     def get_row_by_index(self, row_index: int) -> Row:
         """Get row by given index."""
@@ -413,7 +463,10 @@ class Sheet:
             new_items_list = []
             parent = row.parentNode
             for _i in range(repeat_num - 1):
-                new_row = copy.deepcopy(row)
+                curr_row = Row(row)
+                new_row = curr_row.copy_row()
+                new_row = new_row.row
+                # new_row = copy.deepcopy(row)
                 new_items_list.append(new_row)
             new_rows_dict[row] = new_items_list
 
@@ -422,6 +475,16 @@ class Sheet:
             for new_item in new_items_list:
                 parent.insertBefore(new_item, row)
 
+    def find_repeated_rows(self) -> list[Row]:
+        """Find rows with 'repeated' attribute."""
+        all_rows = self.table.getElementsByType(TableRow)
+        return [Row(curr_row) for curr_row in all_rows if Row.get_repeat_attribute(curr_row) > 1]
+
+    def find_repeated_cells(self) -> list[Cell]:
+        """Find cells with 'repeated' attribute."""
+        all_cells = self.table.getElementsByType(TableCell)
+        return [Cell(curr_cell) for curr_cell in all_cells if Cell.get_repeat_attribute(curr_cell) > 1]
+
     def sort_rows(self, row_transformer: Callable, row_start_index=None, row_end_index=None):
         """Sort rows.
 
@@ -429,12 +492,13 @@ class Sheet:
         :param row_start_index: optional start row
         :param row_end_index: optional end row
         """
-        all_rows = self.get_rows(row_start_index, row_end_index)
+        all_rows = self.get_rows()
+        range_rows = self.get_rows(row_start_index, row_end_index)
 
         row_data_list = []
 
         # for curr_row in table_rows:
-        for curr_row in all_rows:
+        for curr_row in range_rows:
             row_data = row_transformer(curr_row)
             row_data_list.append(
                 (
@@ -449,10 +513,11 @@ class Sheet:
 
         # remove all rows from table
         for row in self.table.getElementsByType(TableRow):
-            try:
-                self.table.removeChild(row)
-            except ValueError as exc:
-                _LOGGER.warning("unable to remove row: %s", exc)
+            self.table.removeChild(row)
+            # try:
+            #     self.table.removeChild(row)
+            # except ValueError as exc:
+            #     _LOGGER.warning("unable to remove row: %s", exc)
 
         table_row_first = row_start_index  ## first proper index
         if not table_row_first:
@@ -518,6 +583,13 @@ class SpreadsheetDocument:
         with tempfile.TemporaryFile() as temp_file:
             self.save(temp_file)
             self.document = odf_load(temp_file)
+
+    def rebuild_cache(self):
+        """Fix document structure after copying items.
+
+        Warning: it corrupts cells formatting. As alternative use 'reload()' method.
+        """
+        self.document.rebuild_caches()
 
     def get_sheet(self, sheet_name: str) -> Sheet:
         """Get spreadsheet by name.

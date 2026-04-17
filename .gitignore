@@ -9,6 +9,7 @@
 /.venv_release/
 
 /build/
+/dist/
 /src/build/
 /src/simpleods.egg-info/
 
