@@ -254,7 +254,7 @@ class SheetTest(unittest.TestCase):
         values = sheet.get_values(expand_repeated=False)
         self.assertEqual([[""], [""], [""], ["", "aa", ""], ["", "aa", ""], ["", "bb", "cc"]], values)
 
-    def test_sort(self):
+    def test_sort_rows__key_01(self):
         document = create_simple_document()
         sheet: Sheet = document.get_sheet("Sheet1")
         sheet.add_new_row()
@@ -277,7 +277,7 @@ class SheetTest(unittest.TestCase):
             row_vals = row.get_values(expand_repeated=False)
             return sorted(row_vals)
 
-        sheet.sort_rows(row_transformer=rows_sorter)
+        sheet.sort_rows(row_key=rows_sorter)
 
         ## check sorted
         self.assertEqual(("1", "A"), cell10.get_spreadsheet_coords())  ## moved from row 1 to row 0
@@ -287,6 +287,82 @@ class SheetTest(unittest.TestCase):
         cell11: Cell = sheet.get_cell_by_index(1, 1)
         self.assertEqual("aaa", cell00.get_text())
         self.assertEqual("bbb", cell11.get_text())
+
+    def test_sort_rows__key_02(self):
+        document = create_simple_document()
+        sheet: Sheet = document.get_sheet("Sheet1")
+        sheet.add_new_column()
+        sheet.add_new_row()
+        sheet.add_new_row()
+        sheet.add_new_row()
+
+        ## set unsorted
+        cell01: Cell = sheet.get_cell_by_index(1, 1)
+        cell10: Cell = sheet.get_cell_by_index(2, 0)
+        cell01.set_text("bbb")
+        cell10.set_text("aaa")
+
+        ## check unsorted
+        self.assertEqual(("2", "B"), cell01.get_spreadsheet_coords())
+        self.assertEqual(("3", "A"), cell10.get_spreadsheet_coords())
+        self.assertEqual("bbb", cell01.get_text())
+        self.assertEqual("aaa", cell10.get_text())
+
+        ## sort
+        def rows_sorter(row: Row):
+            row_vals = row.get_values(expand_repeated=False)
+            return sorted(row_vals)
+
+        sheet.sort_rows(row_key=rows_sorter, row_start_index=1, row_end_index=3)
+
+        ## check sorted
+        self.assertEqual(("2", "A"), cell10.get_spreadsheet_coords())  ## moved from row 1 to row 0
+        self.assertEqual(("3", "B"), cell01.get_spreadsheet_coords())  ## moved from row 0 to row 1
+
+        cell00: Cell = sheet.get_cell_by_index(1, 0)
+        cell11: Cell = sheet.get_cell_by_index(2, 1)
+        self.assertEqual("aaa", cell00.get_text())
+        self.assertEqual("bbb", cell11.get_text())
+
+    def test_sort_rows_constraint(self):
+        ## sort complex case
+
+        document = create_simple_document()
+        sheet: Sheet = document.get_sheet("Sheet1")
+
+        ## set unsorted
+        input_values = [["C", ""], ["B", ""], ["", "A"]]
+        sheet.set_data(input_values)
+
+        ## sort
+        def row_cmp(row1: Row, row2: Row):
+            ## returns a negative number for less-than, zero for equality, or a positive number for greater-than
+
+            row1_vals = row1.get_values(expand_repeated=True)
+            row2_vals = row2.get_values(expand_repeated=True)
+            row1_min = min(x for x in row1_vals if x != "")
+            row2_min = min(x for x in row2_vals if x != "")
+
+            if row1_min < row2_min:
+                row1_index = row1_vals.index(row1_min)
+                if row2_vals[row1_index] == "":
+                    return -1
+                return 0
+
+            if row1_min > row2_min:
+                row2_index = row2_vals.index(row2_min)
+                if row1_vals[row2_index] == "":
+                    return 1
+                return 0
+
+            ## equal min values
+            return 0
+
+        sheet.sort_rows(row_cmp=row_cmp)
+
+        ## check unsorted
+        values = sheet.get_values()
+        self.assertEqual([["", "A"], ["C", ""], ["B", ""]], values)
 
     def test_find_repeated_rows(self):
         data_path = get_data_path("repeated.ods")

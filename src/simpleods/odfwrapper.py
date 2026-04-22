@@ -198,6 +198,16 @@ class Row:
         sheet = self.row.parentNode
         return Sheet(sheet)
 
+    def set_data(self, values: list[str]):
+        """Set row cells with given content values."""
+        for row in self.row.getElementsByType(TableCell):
+            self.row.removeChild(row)
+        cells_num = len(values)
+        for index in range(cells_num):
+            cell_data = values[index]
+            new_cell: Cell = self.add_new_cell()
+            new_cell.set_text(cell_data)
+
     def copy_row(self) -> "Row":
         """Copy row content."""
         ## deep copy of cell object is not advised
@@ -235,6 +245,7 @@ class Row:
         """Insert new cell at end of row."""
         item = TableCell()
         self.row.addElement(item)
+        return Cell(item)
 
     def add_cell(self, item: Cell):
         """Insert cell at end of row."""
@@ -371,7 +382,16 @@ class Sheet:
         cell_list = self.table.getElementsByType(TableCell)
         return len(cell_list)
 
-    def add_new_row(self):
+    def set_data(self, values: list[list[str]]):
+        """Set spreadsheet cells with given content values."""
+        for row in self.table.getElementsByType(TableRow):
+            self.table.removeChild(row)
+        rows_num = len(values)
+        for index in range(rows_num):
+            row_data = values[index]
+            self.add_new_row(row_data)
+
+    def add_new_row(self, values: list[str] = None):
         """Add empty row to sheet."""
         item = TableRow()
         self.table.addElement(item)
@@ -381,8 +401,11 @@ class Sheet:
         if cols_len == 0:
             self.add_new_column()
             return row
-        for _i in range(cols_len):
-            row.add_new_cell()
+        if values:
+            row.set_data(values)
+        else:
+            for _i in range(cols_len):
+                row.add_new_cell()
         return row
 
     def add_row(self, item: Row):
@@ -485,39 +508,26 @@ class Sheet:
         all_cells = self.table.getElementsByType(TableCell)
         return [Cell(curr_cell) for curr_cell in all_cells if Cell.get_repeat_attribute(curr_cell) > 1]
 
-    def sort_rows(self, row_transformer: Callable, row_start_index=None, row_end_index=None):
+    def sort_rows(
+        self,
+        *,
+        row_key: Callable = None,
+        row_cmp: Callable = None,
+        row_start_index=None,
+        row_end_index=None,
+    ):
         """Sort rows.
 
-        :param row_transformer: callable calculating representation of rows
+        :param row_key: callable calculating representation of rows
+        :param row_cmp: callable comparing two rows allowing additional constraints
         :param row_start_index: optional start row
         :param row_end_index: optional end row
         """
-        all_rows = self.get_rows()
-        range_rows = self.get_rows(row_start_index, row_end_index)
+        if (row_key is None) == (row_cmp is None):
+            message = "Exactly one of 'row_key' or 'row_cmp' must be provided"
+            raise ValueError(message)
 
-        row_data_list = []
-
-        # for curr_row in table_rows:
-        for curr_row in range_rows:
-            row_data = row_transformer(curr_row)
-            row_data_list.append(
-                (
-                    row_data,
-                    curr_row,
-                ),
-            )
-
-        rows_sorted = sorted(row_data_list, key=lambda item: item[0])
-        if rows_sorted == row_data_list:
-            return
-
-        # remove all rows from table
-        for row in self.table.getElementsByType(TableRow):
-            self.table.removeChild(row)
-            # try:
-            #     self.table.removeChild(row)
-            # except ValueError as exc:
-            #     _LOGGER.warning("unable to remove row: %s", exc)
+        all_rows: list[Row] = self.get_rows()
 
         table_row_first = row_start_index  ## first proper index
         if not table_row_first:
@@ -526,11 +536,34 @@ class Sheet:
         if not table_row_end:
             table_row_end = len(all_rows)
 
+        sort_rows = all_rows[table_row_first:table_row_end]
+
+        if row_key is not None:
+            sort_rows.sort(key=row_key)
+
+        elif row_cmp is not None:
+            ## manual sort - compare all elements with additional constraints
+            sort_num = len(sort_rows)
+            for i in reversed(range(sort_num)):
+                for curr_index in reversed(range(i)):
+                    next_index = curr_index + 1
+                    row1 = sort_rows[curr_index]
+                    row2 = sort_rows[next_index]
+                    if row_cmp(row1, row2) > 0:
+                        sort_rows[curr_index], sort_rows[next_index] = sort_rows[next_index], sort_rows[curr_index]
+
+        # remove all rows from table
+        for row in self.table.getElementsByType(TableRow):
+            self.table.removeChild(row)
+
         # add all rows in changed order
-        row_new_order = [item[1] for item in rows_sorted]
-        self.add_rows(all_rows[:table_row_first])
-        self.add_rows(row_new_order)
-        self.add_rows(all_rows[table_row_end:])
+        before_rows = all_rows[:table_row_first]
+        self.add_rows(before_rows)
+
+        self.add_rows(sort_rows)
+
+        after_rows = all_rows[table_row_end:]
+        self.add_rows(after_rows)
 
     def get_values(self, *, expand_repeated: bool = True) -> list[list[str]]:
         """Convert all cells to 2D matrix."""
