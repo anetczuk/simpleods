@@ -8,39 +8,40 @@ license-files = ["LICENSE"]
 authors = [
     { name = "Arkadiusz Netczuk" }
 ]
-requires-python = ">=3.12,<3.14"
+requires-python = ">=3.12"
 dependencies = [
     "odfpy",
 ]
 
+[project.urls]
+Repository = "https://github.com/anetczuk/simpleods"
+
 [project.optional-dependencies]
 dev = [
+    ### dependencies for "tools" scripts
+
+    "xmltodict",    ## for mdpreproc.py
+
     "black",
+    "pycodestyle",
+    "flake8",
     "pylint",
     "ruff",
     "complexipy",
     "bandit",
-    "shellcheck_py",
-    "mypy",
-    "coverage",
-    "flake8",
-    "pycodestyle",
-    "pydocstyle",
-    "pyprof2calltree",
     "codespell",
-    
-    ## for Markdown files analysis
-    "mdlinkscheck @ git+https://github.com/anetczuk/mdlinkscheck.git#subdirectory=src",
-    "xmltodict",
-    
+    "shellcheck_py",
+    "pydocstyle",
+    "mypy",
+    "coverage",             ## for coverage.sh
+    "mdlinkscheck",
+
     ## for profiling (tools/profiler.sh)
+    "pyprof2calltree",   
     "snakeviz",
     "mtprof",
     "viztracer",
 ]
-
-[project.urls]
-Repository = "https://github.com/anetczuk/simpleods"
 
 #[project.scripts]
 #myprogramexec = "myprogrampkg.main:main"

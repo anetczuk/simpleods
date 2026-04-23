@@ -58,16 +58,6 @@ else
 fi
 
 
-if [ -f "$SCRIPT_DIR/examples/generate-all.sh" ]; then
-    echo "generating docs"
-    $ACTIVATE_VENV_PATH "$SCRIPT_DIR"/doc/generate-doc.sh
-fi
-
-echo
-echo "preparing README.md file"
-$ACTIVATE_VENV_PATH "$SCRIPT_DIR"/tools/mdpreproc.py "$SCRIPT_DIR/README.md"
-
-
 # run tests in venv (it verifies required packages)
 echo
 echo "running tests"
@@ -76,10 +66,20 @@ for testscript in "${VENV_DIR}"/runtests*.sh; do
 done
 
 
+if [ -f "$SCRIPT_DIR/doc/generate-doc.sh" ]; then
+    echo "generating docs"
+    $ACTIVATE_VENV_PATH "$SCRIPT_DIR"/doc/generate-doc.sh
+fi
+
 if [ -f "$SCRIPT_DIR/examples/generate-all.sh" ]; then
     echo "generating examples results"
     "$SCRIPT_DIR"/examples/generate-all.sh --venv
 fi
+
+echo
+echo
+echo "preparing README.md file"
+$ACTIVATE_VENV_PATH "$SCRIPT_DIR"/tools/mdpreproc.py "$SCRIPT_DIR/README.md"
 
 
 echo

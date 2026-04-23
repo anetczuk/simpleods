@@ -16,9 +16,10 @@ Simple wrapper objects for `odfpy` package allowing easy navigation through spre
 ## Installation
 
 Installation of package for use can be done by:
-  - to install package from downloaded ZIP file execute: `pip3 install --user -I file:simpleods-master.zip`
-  - to install package directly from GitHub execute: `pip3 install --user -I git+https://github.com/anetczuk/simpleods.git`
-  - installation from local repository root directory: `pip3 install --user .`
+ - to install using PyPI: `pip3 install --user simpleods`
+ - to install package from *GitHub* downloaded ZIP file execute: `pip3 install --user -I file:simpleods-master.zip`
+ - to install package directly from *GitHub* execute: `pip3 install --user -I git+https://github.com/anetczuk/simpleods.git`
+ - installation from local repository root directory: `pip3 install --user .`
 
 To uninstall run: `pip3 uninstall simpleods`
 
@@ -56,8 +57,8 @@ directory. This configuration requires installation of dependencies: `./src/inst
 
 ### Running tests
 
-To run tests execute `src/testtestsimpleods/runtests.py`. It can be run with code profiling 
-and code coverage options.
+To run tests execute `src/testtestsimpleods/runtests.py`. Code coverage can be achieved using `coverage.sh` and 
+profiling can be calculated with script `profiler.sh`.
 
 
 ### Tools scripts
