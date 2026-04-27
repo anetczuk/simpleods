@@ -1,6 +1,6 @@
 # simpleods
 
-Simple wrapper objects for `odfpy` package allowing easy navigation through spreadsheet with some handy methods.
+Simple wrapper objects for `odfpy` package allowing easy `ods` spreadsheet data navigation and editing with some handy methods.
 
 
 ## Features

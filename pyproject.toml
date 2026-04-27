@@ -1,12 +1,14 @@
 [project]
 name = "simpleods"
-version = "1.0.1"
-description = "simple wrapper objects for odfpy allowing easy and intuitive navigation through spreadsheet"
+version = "1.0.3"
+description = "simple wrapper objects for odfpy package allowing easy ods spreadsheet data navigation and editing"
+keywords = ["ods", "spreadsheet", "odfpy"]
 readme = "README.md"
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 authors = [
-    { name = "Arkadiusz Netczuk" }
+    ## separate 'name' and 'email' hack to fill "Author:" and "Author-email:" fields
+    { name = "Arkadiusz Netczuk" }, { email = "dev.arnet@gmail.com" }
 ]
 requires-python = ">=3.12"
 dependencies = [
@@ -14,6 +16,7 @@ dependencies = [
 ]
 
 [project.urls]
+Homepage = "https://github.com/anetczuk/simpleods"
 Repository = "https://github.com/anetczuk/simpleods"
 
 [project.optional-dependencies]
